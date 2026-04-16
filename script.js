@@ -6,40 +6,40 @@ import { createMachine } from 'https://esm.sh/yay-machine';
 const rpgMachine = createMachine({
   initial: 'start',
   states: {
-    start: {
-      on: { 
+    start: { //Create hero and start quest
+      on: { // starting quest, pick path
         SEA: 'seaChoice', //Travel to the sea for answers
         LAND: 'looters'  //Travel by foot for the answers
       }
     },
-    seaChoice: {
+    seaChoice: { //when traveling by sea
       on: { 
         CREW: 'found', // Sneak onto someones boat
         ABANDONED: 'holeInBoat' // Steal an abandoned boat
       }
     },
-    found: {
+    found: { // When found on crew boat
       on: { 
         TRICK: 'trick', //Try to trick the pirate and steal their clothes
         FIGHT: 'fight' // Fight the pirate who found you on their ship
       }
     },
-    holeInBoat: {
+    holeInBoat: { // when successfully stolen boat (either abandoned or after fighting crew)
       on: { 
         SWIMORPATCH: 'swim', // EITHER WAY YOU SWIM
       }
     },
-    stealClothes: {
+    stealClothes: { //when successfully tricked pirate on hijacked boat
       on: { 
         CONTINUEJOURNEY: 'goalIsland' //boat takes faux-pirate to correct island
       }
     },
-    stealBoat: {
+    stealBoat: { //when traveling by sea 
       on: { 
         CONTINUEJOURNEY: 'holeInBoat' //steal boat after fight, then leads to hole in boat plot
       }
     },
-    fight: { 
+    fight: { //Used for stealing boat, castle entrance fight, land fight
       on: { 
         WIN_MINUS_TEN_ISLAND: 'strollIn', //Far island fight
         WIN_LAND: 'getInfo', //deal with health in js -50 if epic fight -10 if major win
@@ -48,49 +48,54 @@ const rpgMachine = createMachine({
         LOSE_DIE: 'death' //far island fight
       }
     },
-    walkPlank: { 
+    walkPlank: { // when stealing boat and lost the fight
       on: { 
         SWIMORPATCH: 'swim', // EITHER WAY YOU SWIM
       }
     },
-    volcanoIsland: { 
+    volcanoIsland: { //Enter the closer island
       on: { 
         ENTERISLAND: 'wildBeast'
       }
     },
-    wildBeast: { 
+    wildBeast: { //for the volcano island only
       on: { 
         WINORLOSE: 'recover' //Change health in JS based on result
       }
     },
-    recover: { 
+    recover: { //for the volcano island only
       on: { 
         RIGHTDAYS: 'islandOptions', //choice of leaving of continue recovery
         WRONGDAYS: 'death' //you done for
       }
     },
-    islandOptions: { 
+    islandOptions: { // for the volcano island only
       on: { 
         RECOVER: 'recover', //recover some more
         LEAVE: 'goalIsland' //Continue towards goal quest (make sure health is enough)
       }
     },
-    goalIsland: { 
+    goalIsland: { //for the farther island only
       on: { 
         CASTLE: 'fight', //Duke it out with the guard at the gate
         CAVE: 'strollIn' //Enter the castle from the back entrance
       }
     },
-    swim: { 
+    swim: { // used when boat has a hole (abandoned or stolen), after trying to patch boat, or walking the plank
       on: { 
         SWIM_CLOSE: 'volcanoIsland',
         SWIM_FAR: 'goalIsland'
       }
     },
-    strollIn: { //FILL IN
+    strollIn: { //Enter castle either from the cave entrance or after fight with the guard
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland'
+        FOUNDPERSON: 'fightRandom' //Epic fight
+      }
+    },
+    fightRandom: { //Epic fight
+      on: { 
+        WIN: 'victory', //Win game
+        LOSE: 'death' //you done for
       }
     },
     getInfo: { //FILL IN
@@ -106,22 +111,14 @@ const rpgMachine = createMachine({
         PATCH: 'swim' 
       }
     },
-    death: { //FILL IN
+    death: { //You are a failure, shame shame
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
-      }
+        RESTART: 'start' //Restart game with new hero
     },
-    victory: { //FILL IN
+    victory: { //You defeated the person, why were you fighting again?
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        RESTART: 'start' //Restart game with new hero
       }
-    },
-    game_over: {
-      on: { RESTART: 'village' }
     }
   }
 });
