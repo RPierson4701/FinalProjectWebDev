@@ -3,7 +3,7 @@
 import { createMachine } from 'https://esm.sh/yay-machine';
 
 // 1. Define the "Map" of your game
-const rpgMachine = createMachine({
+export const rpgMachine = createMachine({
   initial: 'start',
   states: {
     start: { //Create hero and start quest
@@ -46,6 +46,14 @@ const rpgMachine = createMachine({
         WIN_BOAT: 'stealBoat', //someone finds you on boat
         LOSE_MINUS_FIFTY: 'walkPlank', // someone finds you on boat
         LOSE_DIE: 'death' //far island fight
+      }
+    },
+    trick: { // Land plot tricks looters, sea plot tricks pirate
+      on: { 
+        WINLAND: 'getInfo', // Learn that you must travel by sea for the answers
+        LOSELAND: 'death', // You are done for, they exploit your weaknesses and kill you for your possessions
+        WINBOAT: 'stealClothes', //blend in with this pirate crew
+        LOSEBOAT: 'fight' //fight anyways
       }
     },
     walkPlank: { // when stealing boat and lost the fight
@@ -98,22 +106,28 @@ const rpgMachine = createMachine({
         LOSE: 'death' //you done for
       }
     },
-    getInfo: { //FILL IN
+    looters: { // When you encounter looters on land
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland'
+        FIGHT: 'fight', //fight them for information
+        TRICK: 'trick', //Trick them for information
+        RUN: 'waterEdge' //Run from them you scaredy-cat
       }
     },
-    looters: { //FILL IN
+    waterEdge: { // When looters chase you to the waters edge
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        FIGHT: 'fight', //fight them for information
+        SWIM: 'swim' //Options to swim to closer or farther island, these looters dont do water
+      }
+    },
+    getInfo: { // THEY TELL YOU TO GO TO THE SEA FOR WHAT YOU ARE LOOKING FOR
+      on: { 
+        SEACHOICE: 'seaChoice' //its the only way to get to your destination
       }
     },
     death: { //You are a failure, shame shame
       on: { 
         RESTART: 'start' //Restart game with new hero
+      }
     },
     victory: { //You defeated the person, why were you fighting again?
       on: { 
@@ -122,38 +136,3 @@ const rpgMachine = createMachine({
     }
   }
 });
-
-// 2. The "Engine" function to update the UI
-function updateUI() {
-  const currentState = rpgMachine.getCurrentState();
-  const display = document.getElementById('game-text');
-  const actionArea = document.getElementById('actions');
-
-  // Update text based on state
-  const content = {
-    village: "You are in a peaceful village. The sun is shining.",
-    forest: "The woods are dark. You hear a growl...",
-    battle: "A wild goblin appears! What do you do?",
-    game_over: "You fainted. The quest ends here."
-  };
-
-  display.innerText = content[currentState];
-  actionArea.innerHTML = ''; // Clear old buttons
-
-  // 3. Dynamically create buttons based on valid transitions
-  // Yay-machine lets us see what keys are available in 'on'
-  const transitions = rpgMachine.getTransitions(); 
-  
-  transitions.forEach(action => {
-    const btn = document.createElement('button');
-    btn.innerText = action;
-    btn.onclick = () => {
-      rpgMachine.transition(action); // Change the state
-      updateUI(); // Refresh the screen
-    };
-    actionArea.appendChild(btn);
-  });
-}
-
-// Start the game UI
-updateUI();
