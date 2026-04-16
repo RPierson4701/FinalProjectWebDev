@@ -8,57 +8,49 @@ const rpgMachine = createMachine({
   states: {
     start: {
       on: { 
-        SEA: 'seaChoice',
-        LAND: 'looters' 
+        SEA: 'seaChoice', //Travel to the sea for answers
+        LAND: 'looters'  //Travel by foot for the answers
       }
     },
     seaChoice: {
       on: { 
-        CREW: 'found',
-        ABANDONED: 'holeInBoat' 
+        CREW: 'found', // Sneak onto someones boat
+        ABANDONED: 'holeInBoat' // Steal an abandoned boat
       }
     },
     found: {
       on: { 
-        TRICK_WIN: 'stealClothes',
-        FIGHT_WIN: 'stealBoat',
-        TRICK_LOSE: 'fight',
-        FIGHT_LOSE: 'walkPlank' 
+        TRICK: 'trick', //Try to trick the pirate and steal their clothes
+        FIGHT: 'fight' // Fight the pirate who found you on their ship
       }
     },
     holeInBoat: {
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        SWIMORPATCH: 'swim', // EITHER WAY YOU SWIM
       }
     },
-    stealClothes: { //FILL IN
+    stealClothes: {
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        CONTINUEJOURNEY: 'goalIsland' //boat takes faux-pirate to correct island
       }
     },
-    stealBoat: { //FILL IN
+    stealBoat: {
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        CONTINUEJOURNEY: 'holeInBoat' //steal boat after fight, then leads to hole in boat plot
       }
     },
     fight: { //FILL IN
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        WIN_MINUS_TEN_ISLAND: 'strollIn', //Far island fight
+        WIN_LAND: 'getInfo', //deal with health in js -50 if epic fight -10 if major win
+        WIN_BOAT: 'stealBoat', //someone finds you on boat
+        LOSE_MINUS_FIFTY: 'walkPlank', // someone finds you on boat
+        LOSE_DIE: 'death' //far island fight
       }
     },
     walkPlank: { //FILL IN
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        SWIMORPATCH: 'swim', // EITHER WAY YOU SWIM
       }
     },
     volcanoIsland: { //FILL IN
@@ -82,6 +74,20 @@ const rpgMachine = createMachine({
       }
     },
     looters: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    death: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    victory: { //FILL IN
       on: { 
         SWIM_CLOSE: 'volcanoIsland',
         SWIM_FAR: 'goalIsland',
