@@ -9,7 +9,7 @@ const rpgMachine = createMachine({
     start: {
       on: { 
         SEA: 'seaChoice',
-        LAND: 'looters' // Transitions back to itself to "heal"
+        LAND: 'looters' 
       }
     },
     seaChoice: {
@@ -20,14 +20,72 @@ const rpgMachine = createMachine({
     },
     found: {
       on: { 
-        TRICK: '',
-        FIGHT: '' 
+        TRICK_WIN: 'stealClothes',
+        FIGHT_WIN: 'stealBoat',
+        TRICK_LOSE: 'fight',
+        FIGHT_LOSE: 'walkPlank' 
       }
     },
-    battle: {
+    holeInBoat: {
       on: { 
-        WIN: 'village',
-        LOSE: 'game_over' 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    stealClothes: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    stealBoat: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    fight: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    walkPlank: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    volcanoIsland: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    goalIsland: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
+      }
+    },
+    swim: { 
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland'
+      }
+    },
+    looters: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland',
+        PATCH: 'swim' 
       }
     },
     game_over: {
