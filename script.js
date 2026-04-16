@@ -39,7 +39,7 @@ const rpgMachine = createMachine({
         CONTINUEJOURNEY: 'holeInBoat' //steal boat after fight, then leads to hole in boat plot
       }
     },
-    fight: { //FILL IN
+    fight: { 
       on: { 
         WIN_MINUS_TEN_ISLAND: 'strollIn', //Far island fight
         WIN_LAND: 'getInfo', //deal with health in js -50 if epic fight -10 if major win
@@ -48,26 +48,52 @@ const rpgMachine = createMachine({
         LOSE_DIE: 'death' //far island fight
       }
     },
-    walkPlank: { //FILL IN
+    walkPlank: { 
       on: { 
         SWIMORPATCH: 'swim', // EITHER WAY YOU SWIM
       }
     },
-    volcanoIsland: { //FILL IN
+    volcanoIsland: { 
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        ENTERISLAND: 'wildBeast'
       }
     },
-    goalIsland: { //FILL IN
+    wildBeast: { 
       on: { 
-        SWIM_CLOSE: 'volcanoIsland',
-        SWIM_FAR: 'goalIsland',
-        PATCH: 'swim' 
+        WINORLOSE: 'recover' //Change health in JS based on result
+      }
+    },
+    recover: { 
+      on: { 
+        RIGHTDAYS: 'islandOptions', //choice of leaving of continue recovery
+        WRONGDAYS: 'death' //you done for
+      }
+    },
+    islandOptions: { 
+      on: { 
+        RECOVER: 'recover', //recover some more
+        LEAVE: 'goalIsland' //Continue towards goal quest (make sure health is enough)
+      }
+    },
+    goalIsland: { 
+      on: { 
+        CASTLE: 'fight', //Duke it out with the guard at the gate
+        CAVE: 'strollIn' //Enter the castle from the back entrance
       }
     },
     swim: { 
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland'
+      }
+    },
+    strollIn: { //FILL IN
+      on: { 
+        SWIM_CLOSE: 'volcanoIsland',
+        SWIM_FAR: 'goalIsland'
+      }
+    },
+    getInfo: { //FILL IN
       on: { 
         SWIM_CLOSE: 'volcanoIsland',
         SWIM_FAR: 'goalIsland'
