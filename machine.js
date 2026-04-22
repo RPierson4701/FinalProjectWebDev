@@ -39,7 +39,9 @@ export const rpgMachine = createMachine({
         CONTINUEJOURNEY: 'holeInBoat' //steal boat after fight, then leads to hole in boat plot
       }
     },
-    fight: { //Used for stealing boat, castle entrance fight, land fight
+
+    //FIX THIS
+    fightLand: { //Used for stealing boat, castle entrance fight, land fight
       on: { 
         WIN_MINUS_TEN_ISLAND: 'strollIn', //Far island fight
         WIN_LAND: 'getInfo', //deal with health in js -50 if epic fight -10 if major win
@@ -48,12 +50,32 @@ export const rpgMachine = createMachine({
         LOSE_DIE: 'death' //far island fight
       }
     },
-    trick: { // Land plot tricks looters, sea plot tricks pirate
+
+    //FIX THIS
+    fightStealBoat: { //Used for stealing boat, castle entrance fight, land fight
+      on: { 
+        WIN_BOAT: 'stealBoat', //someone finds you on boat
+        LOSE_MINUS_FIFTY: 'walkPlank', // someone finds you on boat
+      }
+    },
+
+    //FIX THIS
+    fightCastle: { //Used for stealing boat, castle entrance fight, land fight
+      on: { 
+        WIN_MINUS_TEN_ISLAND: 'strollIn', //Far island fight
+        LOSE_DIE: 'death' //far island fight
+      }
+    },
+    trickPirates: { // sea plot tricks pirate
+      on: { 
+        WINBOAT: 'stealClothes', //blend in with this pirate crew
+        LOSEBOAT: 'fight' //fight anyways
+      }
+    },
+    trickLooters: { // Land plot tricks looters
       on: { 
         WINLAND: 'getInfo', // Learn that you must travel by sea for the answers
         LOSELAND: 'death', // You are done for, they exploit your weaknesses and kill you for your possessions
-        WINBOAT: 'stealClothes', //blend in with this pirate crew
-        LOSEBOAT: 'fight' //fight anyways
       }
     },
     walkPlank: { // when stealing boat and lost the fight
