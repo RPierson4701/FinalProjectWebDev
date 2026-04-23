@@ -8,6 +8,11 @@ let specialItem = "";
 let armor = "";
 let heroName = ""; 
 
+const weaponOptions = ["Sword", "Sorcery", "Ax", "Bow and Arrow"];
+const specialItemOptions = ["Water", "Pet Monkey", ""];
+const armorOptions = ["Cloak", "", ""];
+const heroOptions = ["Blaze", "Seraphina", "Bob"];
+
 // 2. The "Engine" function to update the UI
 function updateUI() {
   const currentState = rpgMachine.getCurrentState();
@@ -22,8 +27,11 @@ function updateUI() {
     holeInBoat: "",
     stealClothes: "",
     stealBoat: "",
-    fight: "",
-    trick: "",
+    fightLooters: "",
+    fightBoat: "",
+    fightCastle: "",
+    trickBoat: "",
+    trickLooters: "",
     walkPlank: "",
     volcanoIsland: "",
     wildBeast: "",
