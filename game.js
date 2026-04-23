@@ -23,6 +23,7 @@ function updateUI() {
   const content = {
     start: "There is a thief in distant lands who has stolen your likeness. They have committed countless crimes, sullied your name, and emptied your life savings. Your mission is to find this thief and take back your life.",
     seaChoice: "You start near port. Nearby, there is ship unattended beside a pirate ship leaving for an unknown destination. Should you steal the unattended ship or stow away on the pirate's vessel?",
+    looters: "You make your way inward on a narrow path. You turn to your left and eyes peer through the brush; then to the right and another set lay upon you. You are being followed... As this revelation hits you, the looters move in closer for attack. What shall you do?",
     found: "",
     holeInBoat: "",
     stealClothes: "",
@@ -41,7 +42,6 @@ function updateUI() {
     swim: "",
     strollIn: "",
     fightRandom: "",
-    looters: "",
     waterEdge: "", 
     getInfo: "",
     death: "",
