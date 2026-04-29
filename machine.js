@@ -1,153 +1,155 @@
-//document.querySelector("head").innerHTML="<title>"+location.pathname.substring(1)+"</title><link rel='stylesheet' href='"+location.hostname+"/style.css'>";
+import { defineMachine } from 'https://esm.sh/yay-machine';
 
-import { createMachine } from 'https://esm.sh/yay-machine';
+// yay-machine requires:
+// - initialState: { name: 'stateName' }
+// - transitions as objects: { to: 'nextState' }
+// - the export is the machine definition (call .newInstance().start() in game.js)
 
-// 1. Define the "Map" of your game
-// 1. Define the "Map" of your game
-export const rpgMachine = createMachine({
-  initial: 'start',
+export const rpgMachine = defineMachine({
+  initialState: { name: 'start' },
+  enableCopyDataOnTransition: true,
   states: {
-    start: { //Create hero and start quest
-      on: { // starting quest, pick path
-        SEA: 'seaChoice', //Travel to the sea for answers
-        LAND: 'looters'  //Travel by foot for the answers
+    start: {
+      on: {
+        SEA: { to: 'seaChoice' },
+        LAND: { to: 'looters' }
       }
     },
-    seaChoice: { //when traveling by sea
-      on: { 
-        CREW: 'found', // Sneak onto someones boat
-        ABANDONED: 'holeInBoat' // Steal an abandoned boat
+    seaChoice: {
+      on: {
+        CREW: { to: 'found' },
+        ABANDONED: { to: 'holeInBoat' }
       }
     },
-    found: { // When found on crew boat
-      on: { 
-        TRICK: 'trickBoat', //Try to trick the pirate and steal their clothes
-        FIGHT: 'fightBoat' // Fight the pirate who found you on their ship
+    found: {
+      on: {
+        TRICK: { to: 'trickBoat' },
+        FIGHT: { to: 'fightBoat' }
       }
     },
-    holeInBoat: { // when successfully stolen boat (either abandoned or after fighting crew)
-      on: { 
-        PATCH: 'swim', // EITHER WAY YOU SWIM
-        SWIM: 'swim'
+    holeInBoat: {
+      on: {
+        PATCH: { to: 'swim' },
+        SWIM: { to: 'swim' }
       }
     },
-    stealClothes: { //when successfully tricked pirate on hijacked boat
-      on: { 
-        CONTINUEJOURNEY: 'goalIsland' //boat takes faux-pirate to correct island
+    stealClothes: {
+      on: {
+        CONTINUEJOURNEY: { to: 'goalIsland' }
       }
     },
-    stealBoat: { //when traveling by sea 
-      on: { 
-        CONTINUEJOURNEY: 'holeInBoat' //steal boat after fight, then leads to hole in boat plot
+    stealBoat: {
+      on: {
+        CONTINUEJOURNEY: { to: 'holeInBoat' }
       }
     },
-    fightBoat: { //Used for stealing boat, castle entrance fight, land fight
-      on: { 
-        WIN_BOAT: 'stealBoat', //someone finds you on boat
-        LOSE_MINUS_FIFTY: 'walkPlank', // someone finds you on boat
+    fightBoat: {
+      on: {
+        WIN_BOAT: { to: 'stealBoat' },
+        LOSE_MINUS_FIFTY: { to: 'walkPlank' }
       }
     },
-    fightCastle: { //Used for stealing boat, castle entrance fight, land fight
-      on: { 
-        WIN_MINUS_TEN_ISLAND: 'strollIn', //Far island fight
-        LOSE_DIE: 'death' //far island fight
+    fightCastle: {
+      on: {
+        WIN_MINUS_TEN_ISLAND: { to: 'strollIn' },
+        LOSE_DIE: { to: 'death' }
       }
     },
-    fightLooters: { //Used for stealing boat, castle entrance fight, land fight, water-edge fight
-      on: { 
-        WIN_LAND: 'getInfo', //deal with health in js -50 if epic fight -10 if major win
+    fightLooters: {
+      on: {
+        WIN_LAND: { to: 'getInfo' }
       }
     },
-    trickLooters: { // Land plot tricks looters, sea plot tricks pirate
-      on: { 
-        WINLAND: 'getInfo', // Learn that you must travel by sea for the answers
-        LOSELAND: 'death', // You are done for, they exploit your weaknesses and kill you for your possessions
+    trickLooters: {
+      on: {
+        WINLAND: { to: 'getInfo' },
+        LOSELAND: { to: 'death' }
       }
     },
-    trickBoat: { // Land plot tricks looters, sea plot tricks pirate
-      on: { 
-        WINBOAT: 'stealClothes', //blend in with this pirate crew
-        LOSEBOAT: 'fightBoat' //fight anyways
+    trickBoat: {
+      on: {
+        WINBOAT: { to: 'stealClothes' },
+        LOSEBOAT: { to: 'fightBoat' }
       }
     },
-    walkPlank: { // when stealing boat and lost the fight
-      on: { 
-        PATCH: 'swim', // EITHER WAY YOU SWIM
-        SWIM: 'swim'
+    walkPlank: {
+      on: {
+        PATCH: { to: 'swim' },
+        SWIM: { to: 'swim' }
       }
     },
-    volcanoIsland: { //Enter the closer island
-      on: { 
-        ENTERISLAND: 'wildBeast'
+    volcanoIsland: {
+      on: {
+        ENTERISLAND: { to: 'wildBeast' }
       }
     },
-    wildBeast: { //for the volcano island only
-      on: { 
-        WINORLOSE: 'recover' //Change health in JS based on result
+    wildBeast: {
+      on: {
+        WINORLOSE: { to: 'recover' }
       }
     },
-    recover: { //for the volcano island only
-      on: { 
-        CHOICEONE: 'islandOptions', //First Choice will loop you
-        CHOICETWO: 'islandOptions', //Second choice will loop you
-        CHOICETHREE: 'death' //Third choice will lead to death
+    recover: {
+      on: {
+        CHOICEONE: { to: 'islandOptions' },
+        CHOICETWO: { to: 'islandOptions' },
+        CHOICETHREE: { to: 'death' }
       }
     },
-    islandOptions: { // for the volcano island only
-      on: { 
-        RECOVER: 'recover', //recover some more
-        LEAVE: 'goalIsland' //Continue towards goal quest (make sure health is enough)
+    islandOptions: {
+      on: {
+        RECOVER: { to: 'recover' },
+        LEAVE: { to: 'goalIsland' }
       }
     },
-    goalIsland: { //for the farther island only
-      on: { 
-        CASTLE: 'fightCastle', //Duke it out with the guard at the gate
-        CAVE: 'strollIn' //Enter the castle from the back entrance
+    goalIsland: {
+      on: {
+        CASTLE: { to: 'fightCastle' },
+        CAVE: { to: 'strollIn' }
       }
     },
-    swim: { // used when boat has a hole (abandoned or stolen), after trying to patch boat, or walking the plank
-      on: { 
-        SWIM_CLOSE: 'volcanoIsland', //If your health is low or you want to go here 
-        SWIM_FAR: 'goalIsland' // If your health is strong enough
+    swim: {
+      on: {
+        SWIM_CLOSE: { to: 'volcanoIsland' },
+        SWIM_FAR: { to: 'goalIsland' }
       }
     },
-    strollIn: { //Enter castle either from the cave entrance or after fight with the guard
-      on: { 
-        FOUNDPERSON: 'fightRandom' //Epic fight
+    strollIn: {
+      on: {
+        FOUNDPERSON: { to: 'fightRandom' }
       }
     },
-    fightRandom: { //Epic fight
-      on: { 
-        WIN: 'victory', //Win game
-        LOSE: 'death' //you done for
+    fightRandom: {
+      on: {
+        WIN: { to: 'victory' },
+        LOSE: { to: 'death' }
       }
     },
-    looters: { // When you encounter looters on land
-      on: { 
-        FIGHT: 'fightLooters', //fight them for information
-        TRICK: 'trickLooters', //Trick them for information
-        RUN: 'waterEdge' //Run from them you scaredy-cat
+    looters: {
+      on: {
+        FIGHT: { to: 'fightLooters' },
+        TRICK: { to: 'trickLooters' },
+        RUN: { to: 'waterEdge' }
       }
     },
-    waterEdge: { // When looters chase you to the waters edge
-      on: { 
-        FIGHT: 'fightLooters', //fight them for information
-        SWIM: 'swim' //Options to swim to closer or farther island, these looters dont do water
+    waterEdge: {
+      on: {
+        FIGHT: { to: 'fightLooters' },
+        SWIM: { to: 'swim' }
       }
     },
-    getInfo: { // THEY TELL YOU TO GO TO THE SEA FOR WHAT YOU ARE LOOKING FOR
-      on: { 
-        SEACHOICE: 'seaChoice' //its the only way to get to your destination
+    getInfo: {
+      on: {
+        SEACHOICE: { to: 'seaChoice' }
       }
     },
-    death: { //You are a failure, shame shame
-      on: { 
-        RESTART: 'start' //Restart game with new hero
+    death: {
+      on: {
+        RESTART: { to: 'start' }
       }
     },
-    victory: { //You defeated the person, why were you fighting again?
-      on: { 
-        RESTART: 'start' //Restart game with new hero
+    victory: {
+      on: {
+        RESTART: { to: 'start' }
       }
     }
   }

@@ -1,1 +1,12 @@
-
+#game-container{
+    text-align: center;
+}
+button{
+    margin: .5rem;
+    border-radius: 5px;
+}
+button:hover{
+    background-color: lightskyblue;
+    color: ivory;
+    border-color: gold;
+}
