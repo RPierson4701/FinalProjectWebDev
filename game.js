@@ -68,7 +68,7 @@ const transitions = {
     volcanoIsland: `You arrive at a pecuilar island housing a lone volcano. The surroundings don't tell you very much, so it would be wise to investigate further.`,
     wildBeast: `You're alerted by the sound of a ghastly roar! You turn around and find yourself at the mercy of a wild beast! You draw your, ` weapon + ` and begin the fight for your life.`,
     recover: `You lie in a makeshift shelter, resting to recover from your wounds.`,
-    islandOptions: `Your respit`,
+    islandOptions: `Your respite m`,
 
     //If your special item is a Monocular, an extra piece of text will appear indicating to go to the cave, both options should still be available.
     goalIsland: `The island, once nearly disguised by the mist, now stands before you in all its glory. Upon the island, you see a large castle and a cave enterance. You know that the thief is on this island, but where could they be hiding? Do you approach the castle head on or do you try to find a secret entrance around back?`,
