@@ -9,9 +9,16 @@ header {
 button{
     margin: .5rem;
     border-radius: 5px;
+    font-size: 1rem;
 }
-button.disabled!==true:hover{
+button:hover:not(:disabled){
     background-color: lightskyblue;
     color: ivory;
     border-color: gold;
+}
+
+#visual-element {
+  transition: opacity 0.5s ease-in-out;
+  max-width: 100%;
+  height: auto;
 }
