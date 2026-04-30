@@ -103,7 +103,18 @@ export const rpgMachine = defineMachine({
     goalIsland: {
       on: {
         CASTLE: { to: 'fightCastle' },
-        CAVE: { to: 'strollIn' }
+        CAVE: { to: 'secretPassage' }
+      }
+    },
+    secretPassage: {
+      on:  {
+        DOORONE: { to: 'backEntrance'},
+        DOORTWO: {to: 'backEntrance'}
+      }
+    },
+    backEntrance: {
+      on: {
+        FOUNDPERSON: {to: 'fightRandom'}
       }
     },
     swim: {
@@ -119,6 +130,7 @@ export const rpgMachine = defineMachine({
     },
     fightRandom: {
       on: {
+        BATTLE: { to: 'fightRandom'},
         WIN: { to: 'victory' },
         LOSE: { to: 'death' }
       }
