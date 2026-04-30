@@ -1,6 +1,5 @@
 import { rpgMachine } from './machine.js';
 
-
 // Start a machine instance (yay-machine API)
 const game = rpgMachine.newInstance().start();
 
@@ -16,7 +15,6 @@ let heroName = ``;
 const weaponOptions = [`Sword`, `Sorcery`, `Ax`, `Bow and Arrow`];
 const specialItemOptions = [`Water`, `Pet Monkey`, `Monocular`];
 const armorOptions = [`Cloak`, ``, ``];
-const heroOptions = [`Blaze`, `Seraphina`, `Bob`];
 
 // Local map of valid events per state — used to build buttons.
 // Updated to match the specific fight/trick state split.
@@ -66,9 +64,9 @@ const transitions = {
     trickBoat: `You attempt to deceive the pirates by matching their attire using your, ` + weapon + `! If they believe to be one of their own, you can hitch a ride... let's see if it works...`,
     walkPlank: `Unfortunately you've been bested by the pirates... Luckily they leave you alive, but you have to pay for your insolence they force you to walk the plank. How cruel. `,
     volcanoIsland: `You arrive at a pecuilar island housing a lone volcano. The surroundings don't tell you very much, so it would be wise to investigate further.`,
-    wildBeast: `You're alerted by the sound of a ghastly roar! You turn around and find yourself at the mercy of a wild beast! You draw your, ` weapon + ` and begin the fight for your life.`,
-    recover: `You lie in a makeshift shelter, resting to recover from your wounds.`,
-    islandOptions: `Your respite makes you feel just a little bet`,
+    wildBeast: `You're alerted by the sound of a ghastly roar! You turn around and find yourself at the mercy of a wild beast! You draw your, ${weapon} and begin the fight for your life.`,
+    recover: `After battling the beast, you must recover. Choose wisely how you will recover, for the wrong choice may lead to your demise.`,
+    islandOptions: `Your respite on the island has given you strength. Should you choose to stay and recover more or do you feel ready to depart for the final stretch of your journey?`,
 
     //If your special item is a Monocular, an extra piece of text will appear indicating to go to the cave, both options should still be available.
     goalIsland: `The island, once nearly disguised by the mist, now stands before you in all its glory. Upon the island, you see a large castle and a cave enterance. You know that the thief is on this island, but where could they be hiding? Do you approach the castle head on or do you try to find a secret entrance around back?`,
@@ -145,7 +143,9 @@ function updateUI() {
   display.innerText = content[stateName] ?? `Unknown state: ${stateName}`;
   if (healthDisplay) healthDisplay.innerText = `❤️ Health: ${playerHealth}`;
   actionArea.innerHTML = '';
-
+  //remove any text that is based on the state, only shown as additional text
+    const oldText = document.querySelectorAll('.state-based-text');
+    oldText.forEach(el => el.remove());
   const events = transitions[stateName] ?? [];
   events.forEach(eventType => {
     const btn = document.createElement('button');
@@ -157,31 +157,31 @@ function updateUI() {
     }
     //Wrong weapon at castle gates, do not create this option at all
     else if (eventType === 'WIN_MINUS_TEN_ISLAND' && (weapon != 'Sword' || weapon === 'Bow and Arrow')){
-      return;
+      btn.disabled = true;
     } 
     //Correct weapon at castle gates, do not create this option at all
     else if (eventType === 'LOSE_DIE' && (weapon === 'Sword' || weapon === 'Bow and Arrow')){
-      return;
+      btn.disabled = true;
     } 
     //Wrong weapon and attempted to trick
     else if (eventType === 'WINBOAT' && weapon != 'Sorcery'){
-      return;
+      btn.disabled = true;
     }
     //Correct weapon and attempted to trick
     else if (eventType === 'LOSEBOAT' && weapon === 'Sorcery'){
-      return;
+      btn.disabled = true;
     }
     //Wrong weapon and attempted to fight
     else if (eventType === 'WIN_BOAT' && (weapon != 'Sword' || weapon === 'Bow and Arrow')){
-      return;
+      btn.disabled = true;
     }
     // We will not lose this fight
     else if (eventType === 'LOSE_MINUS_FIFTY' && (weapon === 'Sword' || weapon === 'Bow and Arrow')){
-      return;
+      btn.disabled = true;
     }
     // Can not make it to the far island yet
     else if (eventType === 'LEAVE' && playerHealth < 90){
-      return;
+      btn.disabled = true;
     }
     //Not ready for this button option yet
     else if (eventType === 'WIN' && opponentHealth != 0){
@@ -194,23 +194,34 @@ function updateUI() {
     
     btn.onclick = () => {
 
-      //remove any text that is based on the state, only shown as additional text
-      const oldText = document.querySelectorAll('state-based-text');
-      oldText.forEach(el => el.remove());
-
-
-      if (eventType === 'LOSE_MINUS_FIFTY') playerHealth = Math.max(0, playerHealth - 50);
-      if (eventType === 'WIN_MINUS_TEN_ISLAND') playerHealth = Math.max(0, playerHealth - 10);
-      if (eventType === 'WINORLOSE') playerHealth = Math.max(0, playerHealth - 20);
-      if (eventType === 'WIN_LAND'||eventType === 'WIN_BOAT'||eventType === 'WINLAND'||eventType === 'WINBOAT') playerHealth = Math.max(0, playerHealth - 2);
-      if (eventType === 'LOSEBOAT') playerHealth = Math.max(0, playerHealth - 10);
-      if (eventType === 'PATCH') playerHealth = Math.max(0, playerHealth - 5);
+      if (eventType === 'LAND'){
+      currentLocationOrigin = 'land';
+      }
+      else if (eventType === 'SEA'){
+        currentLocationOrigin = 'sea';
+      }
+      if (eventType === 'CHOICEONE' || eventType === 'CHOICETWO') {
+        let healthImprovement = Math.floor(Math.random() * 20) + 1;
+        playerHealth = Math.min(100, playerHealth + healthImprovement);
+      }
+      else if (eventType === 'LOSE_MINUS_FIFTY') playerHealth = Math.max(0, playerHealth - 50);
+      else if (eventType === 'WIN_MINUS_TEN_ISLAND') playerHealth = Math.max(0, playerHealth - 10);
+      else if (eventType === 'WINORLOSE') playerHealth = Math.max(0, playerHealth - 20);
+      else if (eventType === 'WIN_LAND'||eventType === 'WIN_BOAT'||eventType === 'WINLAND'||eventType === 'WINBOAT') playerHealth = Math.max(0, playerHealth - 2);
+      else if (eventType === 'LOSEBOAT') playerHealth = Math.max(0, playerHealth - 10);
+      else if (eventType === 'PATCH') {
+        playerHealth = Math.max(0, playerHealth - 5);
+        let patchText = document.createElement('p');
+        patchText.classList.add('state-based-text');
+        patchText.innerText = "You attempt to patch the hole, but it's not a fix. The boat is still taking on water and you lose some health as you struggle to keep it afloat. You quickly realize that the water is your only option.";
+        document.body.appendChild(patchText);
+      }
 
       //Death.
-      if (eventType === 'LOSELAND'||eventType === 'LOSE_DIE') playerHealth = 0;
+      else if (eventType === 'LOSELAND'||eventType === 'LOSE_DIE' || eventType === 'CHOICETHREE') playerHealth = 0;
 
       //Reset player stats and options
-      if (eventType === 'RESTART') {
+      else if (eventType === 'RESTART') {
         playerHealth = 100;
         weapon = '';
         specialItem = '';
@@ -218,13 +229,19 @@ function updateUI() {
         heroName = '';
         currentLocationOrigin = '';
       } 
-      
       //Create an additional clue for our players if they chose this special item
-      if ((eventType === 'LEAVE' || eventType === 'STEALCLOTHES' || eventType === 'SWIM_FAR') && specialItem === 'Monocular'){
+      else if ((eventType === 'LEAVE' || eventType === 'STEALCLOTHES' || eventType === 'SWIM_FAR') && specialItem === 'Monocular'){
         let monocular = document.createElement('p');
-        monocular.addClassName('state-based-text');
+        monocular.classList.add('state-based-text');
         monocular.innerText = "Your Monocular reveals a hidden doorway within the cave! This must be the way!";
-        document.appendChild(monocular);
+        document.body.appendChild(monocular);
+      }
+
+      if (eventType === 'CHOICETHREE') {
+        let choiceThree = document.createElement('p');
+        choiceThree.classList.add('state-based-text');
+        choiceThree.innerText = "As you sleep, the island's notorious volcanic activity causes a sudden eruption. The resulting ash cloud engulfs you, leading to suffocation and an untimely demise.";
+        document.body.appendChild(choiceThree);
       }
 
       game.send({ type: eventType });
@@ -233,6 +250,16 @@ function updateUI() {
     };
     actionArea.appendChild(btn);
   });
+  if(currentLocationOrigin==='start'){
+    let weaponChoice=[];
+    for(let i=0;i<weaponOptions;i++){
+      let choiceOne=document.createElement("input");
+      choiceOne.type="radio";
+      choiceOne.name="weapons";
+      choiceOne.value=
+    }
+    //document.querySelector("game-container").appendChild(weaponChoice);
+  }
 }
 
 const saveGame = () => {

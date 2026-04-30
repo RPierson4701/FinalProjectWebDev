@@ -1,3 +1,8 @@
+header {
+    margin: 1rem;
+    text-align: center;
+}
+
 #game-container{
     text-align: center;
 }

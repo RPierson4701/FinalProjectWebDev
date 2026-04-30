@@ -96,4 +96,4 @@ Finish content
 Gray out buttons
 Update health
 Add styling
-Add images
+Add image (Jaden can do this)

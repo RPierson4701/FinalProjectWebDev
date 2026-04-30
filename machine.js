@@ -74,7 +74,6 @@ export const rpgMachine = defineMachine({
     },
     walkPlank: {
       on: {
-        PATCH: { to: 'swim' },
         SWIM: { to: 'swim' }
       }
     },
