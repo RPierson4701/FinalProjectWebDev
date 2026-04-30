@@ -14,7 +14,7 @@ let heroName = ``;
 
 const weaponOptions = [`Sword`, `Sorcery`, `Ax`, `Bow and Arrow`];
 const specialItemOptions = [`Water`, `Pet Monkey`, `Monocular`];
-const armorOptions = [`Cloak`, ``, ``];
+const armorOptions = [`Cloak`, `Plate`, `Glue`];
 
 // Local map of valid events per state — used to build buttons.
 // Updated to match the specific fight/trick state split.
@@ -139,19 +139,35 @@ const actionLabels = {
   RESTART: "Begin a New Hero's Journey"
 };
 
+const visuals = {
+  start: "assets/Placeholder-1.jpg",
+  seaChoice: "assets/Placeholder-2.jpg",
+  looters: "assets/Placeholder-2.jpg"
+}
+
 function updateUI() {
+ 
   const stateName = game.state.name;
   const display = document.getElementById('game-text');
   const actionArea = document.getElementById('actions');
   const healthDisplay = document.getElementById('health');
 
+  //Print state name for debug purposes
+  console.log(stateName);
+
+  //Updating image source dependent on the stage
+  const visualImg = document.getElementById('visual-element');
+  
+  if (visualImg) {
+    // Update the src. If the state isn't in our visuals object, 
+    // it defaults back to Placeholder-1.
+    visualImg.src = visuals[stateName] || "assets/Placeholder-1.jpg";
+    visualImg.alt = `Scene for ${stateName}`;
+  }
+
   display.innerText = content[stateName] ?? `Unknown state: ${stateName}`;
   if (healthDisplay) healthDisplay.innerText = `❤️ Health: ${playerHealth}`;
   actionArea.innerHTML = '';
-
-  //remove any text/features that are based on the state, only shown as additional text
-    const oldText = document.querySelectorAll('.state-based-text');
-    oldText.forEach(el => el.remove());
 
   const events = transitions[stateName] ?? [];
   events.forEach(eventType => {
@@ -245,14 +261,11 @@ function updateUI() {
       else if (eventType === 'PATCH') {
         playerHealth = Math.max(0, playerHealth - 5);
         let patchText = document.createElement('p');
-        patchText.classList.add('state-based-text');
         patchText.innerText = "You attempt to patch the hole, but it's not a fix. The boat is still taking on water and you lose some health as you struggle to keep it afloat. You quickly realize that the water is your only option.";
         document.body.appendChild(patchText);
       }
-
       //Death.
       else if (eventType === 'LOSELAND'||eventType === 'LOSE_DIE' || eventType === 'CHOICETHREE') playerHealth = 0;
-
       //Reset player stats and options
       else if (eventType === 'RESTART') {
         playerHealth = 100;
@@ -265,14 +278,13 @@ function updateUI() {
       //Create an additional clue for our players if they chose this special item
       else if ((eventType === 'LEAVE' || eventType === 'STEALCLOTHES' || eventType === 'SWIM_FAR') && specialItem === 'Monocular'){
         let monocular = document.createElement('p');
-        monocular.classList.add('state-based-text');
         monocular.innerText = "Your Monocular reveals a hidden doorway within the cave! This must be the way!";
         document.body.appendChild(monocular);
       }
 
+      //Additional Text for Island, Explains why you died, needs to be an if instead of else if
       if (eventType === 'CHOICETHREE') {
         let choiceThree = document.createElement('p');
-        choiceThree.classList.add('state-based-text');
         choiceThree.innerText = "As you sleep, the island's notorious volcanic activity causes a sudden eruption. The resulting ash cloud engulfs you, leading to suffocation and an untimely demise.";
         document.body.appendChild(choiceThree);
       }
@@ -289,6 +301,9 @@ function updateUI() {
     user.type="text";
     user.name="userName";
     user.id="userName";
+    let userLabel=document.createElement("label");
+    userLabel.innerText="Username: ";
+    startForm.appendChild(userLabel);
     startForm.appendChild(user);
     let header=document.createElement("h1");
     header.innerText="Weapon Options";
@@ -329,39 +344,42 @@ function updateUI() {
       label.innerHTML=armorOptions[i];
       startForm.appendChild(label);
     }
-    document.querySelectorAll(".state-based-text").appendChild(startForm);
+    document.querySelector("#game-text").append(startForm);
   }
 }
 
 const saveGame = () => {
   localStorage.setItem('rpgGameSave', JSON.stringify({
     stateName: game.state.name,
-    playerHealth,
-    weapon,
-    specialItem,
-    armor,
-    heroName,
-    currentLocationOrigin
+    playerHealth: playerHealth,
+    weapon: weapon,
+    specialItem: specialItem,
+    armor: armor,
+    heroName: heroName,
+    currentLocationOrigin: currentLocationOrigin
   }));
 };
 
-// const loadGame = () => {
-//   const saved = localStorage.getItem('rpgGameSave');
-//   if (!saved) return;
+const loadGame = () => {
+ const saved = localStorage.getItem('rpgGameSave');
+  if (!saved) return;
 
-//   const data = JSON.parse(saved);
-//   playerHealth = data.playerHealth ?? 100;
-//   weapon = data.weapon ?? '';
-//   specialItem = data.specialItem ?? '';
-//   armor = data.armor ?? '';
-//   heroName = data.heroName ?? '';
-//   currentLocationOrigin = data.currentLocationOrigin ?? '';
+   const data = JSON.parse(saved);
+   playerHealth = data.playerHealth ?? 100;
+   weapon = data.weapon ?? '';
+   specialItem = data.specialItem ?? '';
+   armor = data.armor ?? '';
+   heroName = data.heroName ?? '';
+   currentLocationOrigin = data.currentLocationOrigin ?? '';
 
-//   if (data.stateName) {
-//     game.start();
-//     game.send({ type: data.stateName });
-//   }
-// };
+  if (data.stateName && data.stateName !== 'start') {
+      // Start the machine normally
+      game.start(); 
+      // Send a special event to jump to the saved state
+      game.send({ type: 'LOAD_STATE', targetState: data.stateName });
+      updateUI();
+    }
+ };
 
 // loadGame();
 updateUI();

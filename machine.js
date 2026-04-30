@@ -162,6 +162,9 @@ export const rpgMachine = defineMachine({
       on: {
         RESTART: { to: 'start' }
       }
+    },
+    global: {
+      LOAD_STATE: (context, event) => ({to: event.targetState})
     }
   }
 });

@@ -91,9 +91,5 @@ let armor = "";
 let heroName = ""; 
 
 
-Character Creation State
-Finish content
-Gray out buttons
-Update health
 Add styling
 Add image (Jaden can do this)
