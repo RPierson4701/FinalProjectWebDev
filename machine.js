@@ -130,9 +130,10 @@ export const rpgMachine = defineMachine({
     },
     fightRandom: {
       on: {
-        BATTLE: { to: 'fightRandom'},
-        WIN: { to: 'victory' },
-        LOSE: { to: 'death' }
+        FIGHT_RUTHLESS: { to: 'victory' },
+        FIGHT_CAREFUL: { to: 'victory' },
+        FIGHT_RUTHLESS_FAIL: { to: 'death' },
+        FIGHT_CAREFUL_FAIL: { to: 'death' }
       }
     },
     looters: {
@@ -168,4 +169,3 @@ export const rpgMachine = defineMachine({
     }
   }
 });
-

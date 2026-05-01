@@ -39,6 +39,8 @@ class Game {
     this.armorOptions = ['Cloak', 'Plate', 'Glue'];
     this.observers = [];
     this.lastEvent = null;
+    this.winningFightMove = null;
+    this._resolvedFightEvent = null;
   }
 
   addObserver(observer) {
@@ -74,14 +76,23 @@ class Game {
   }
 
   sendEvent(eventType) {
-    this.lastEvent = eventType;
-    this.applyEventEffects(eventType);
-    if (this.instance) {
-      this.instance.send({ type: eventType });
+  this.lastEvent = eventType;
+  this.applyEventEffects(eventType);
+  
+  if (this.instance) {
+    if (eventType === 'RESTART') {
+      this.instance = this.machine.newInstance().start();
+      this.winningFightMove = null;
+    } else {
+      const machineEvent = this._resolvedFightEvent || eventType;
+      this._resolvedFightEvent = null;
+      this.instance.send({ type: machineEvent });
     }
-    this.save();
-    this.notifyObservers();
   }
+  
+  this.save();
+  this.notifyObservers();
+}
 
   getCurrentState() {
     return this.instance ? this.instance.state.name : null;
@@ -93,7 +104,16 @@ class Game {
   }
 
   applyEventEffects(eventType) {
+    if (['FOUNDPERSON', 'WIN_MINUS_TEN_ISLAND'].includes(eventType)) {
+      this.winningFightMove = Math.random() < 0.5 ? 'FIGHT_RUTHLESS' : 'FIGHT_CAREFUL';
+    }
     switch (eventType) {
+      case 'FIGHT_RUTHLESS':
+      case 'FIGHT_CAREFUL': {
+        const isWin = eventType === this.winningFightMove;
+        this._resolvedFightEvent = isWin ? eventType : eventType + '_FAIL';
+        break;
+      }
       case 'LAND':
         this.currentLocationOrigin = 'land';
         break;
@@ -208,12 +228,7 @@ class Game {
         return this.weapon === 'Sword' || this.weapon === 'Bow and Arrow';
       case 'LEAVE':
         return this.playerHealth < 90;
-      case 'WIN':
-        return this.opponentHealth !== 0;
-      case 'BATTLE':
-        return this.opponentHealth === 0 || this.playerHealth === 0;
-      case 'LOSE':
-        return this.playerHealth !== 0;
+
       default:
         return false;
     }
@@ -245,7 +260,7 @@ class UI extends Observer {
       goalIsland: ['CASTLE', 'CAVE'],
       swim: ['SWIM_CLOSE', 'SWIM_FAR'],
       strollIn: ['FOUNDPERSON'],
-      fightRandom: ['WIN', 'LOSE'],
+      fightRandom: ['FIGHT_RUTHLESS', 'FIGHT_CAREFUL'],
       looters: ['FIGHT', 'TRICK', 'RUN'],
       waterEdge: ['FIGHT', 'SWIM'],
       getInfo: ['SEACHOICE'],
@@ -261,7 +276,7 @@ class UI extends Observer {
       FIGHT: "Engage in Combat",
       CONTINUEJOURNEY: "Continue the Journey",
       WIN_MINUS_TEN_ISLAND: "Victory",
-      WIN_LAND: "Defeat the Looters",
+      WIN_LAND: "Fight the Looters",
       WIN_BOAT: "Seize the Vessel",
       LOSE_MINUS_FIFTY: "Overpowered and Captured",
       LOSE_DIE: "Meet Your End",
@@ -290,13 +305,55 @@ class UI extends Observer {
       BATTLE: "Engage in Combat",
       RUN: "Flee Toward the Water's Edge",
       SEACHOICE: "Head to the Docks",
-      RESTART: "Begin a New Hero's Journey"
+      RESTART: "Begin a New Hero's Journey",
+      FIGHT_RUTHLESS: "Fight Ruthlessly",
+      FIGHT_CAREFUL: "Fight Carefully"
     };
     this.visuals = {
-      start: "assets/Placeholder-1.jpg",
-      seaChoice: "assets/Placeholder-2.jpg",
-      looters: "assets/Placeholder-2.jpg"
+      start: "assets/baloo_base.gif",
+      //seaChoice: "assets/Placeholder-2.jpg",
+      //looters: "assets/Placeholder-2.jpg"
     };
+    this.weaponGifs = {
+      'Sword': "assets/baloo_sword.gif",
+      'Sorcery': "assets/baloo_sorcery.gif",
+      'Ax': "assets/baloo_ax.gif",
+      'Bow and Arrow': "assets/baloo_bow.gif"
+    };
+    this.landTypes = {
+      start:        'start',
+      looters:      'land',
+      waterEdge:    'land',
+      trickLooters: 'land',
+      fightLooters: 'land',
+      getInfo:      'land',
+      seaChoice:    'sea',
+      found:        'sea',
+      holeInBoat:   'sea',
+      fightBoat:    'sea',
+      trickBoat:    'sea',
+      stealBoat:    'sea',
+      walkPlank:    'sea',
+      swim:         'sea',
+      volcanoIsland:'cave',
+      wildBeast:    'cave',
+      recover:      'cave',
+      islandOptions:'cave',
+      secretPassage:'cave',
+      goalIsland:   'castle',
+      fightCastle:  'castle',
+      strollIn:     'castle',
+      backEntrance: 'castle',
+      fightRandom:  'castle',
+      stealClothes: 'castle',
+      victory:      'castle',
+      death:        'castle'
+    };
+    document.getElementById('permanent-reset').onclick = () => {
+  if (confirm("Are you sure you want to start over? All progress will be lost.")) {
+    this.game.sendEvent('RESTART');
+  }
+};
   }
 
   getContent(stateName, gameState) {
@@ -304,38 +361,38 @@ class UI extends Observer {
     return content[stateName] ?? `Unknown state: ${stateName}`;
   }
 
-    getContent(stateName, gameState) {
-        const content = {
-              start: `There is a thief in distant lands who has stolen your likeness. They have committed countless crimes, sullied your name, and emptied your life savings. Your mission is to find this thief and take back your life...`,
-                    seaChoice: `You start near port. Nearby, there is ship unattended beside a pirate ship leaving for an unknown destination. Should you steal the unattended ship or stow away on the pirate's vessel?`,
-                          looters: `You make your way inward on a narrow path. You turn to your left and eyes peer through the brush; then to the right and another set lay upon you. You are being followed... As this revelation hits you, the looters move in closer for attack. What shall you do?`,
-                                waterEdge: `You make a break for it. These looters are no match for ${gameState.heroName}! You race away from any familiar lands and stumble across the waters edge. The looters quickly catch up... what shall you do now?`,
-                                      trickLooters: `You attempt to deceive these fools posing as looters. Using your secret weapon, ${gameState.weapon} you attempt to beguile these looters for information. Let us see how they will respond...`,
-                                            found: `The crew has found you on the boat. You now have the choice to either try to trick them or fight them. Choose wisely, for the choice you make may determine whether you survive or not.`,
-                                                  holeInBoat: `The abandoned boat you found has a hole in it making it not safe for travel. Your choice now is to try to patch the hole or you can decide to abandon ship and swim to your destination.`,
-                                                        stealClothes: `You have been successful in tricking the pirates by means of stealing their clothes. You are now seen as a member of their crew and are able to ride along with them to your destination.`,
-                                                              stealBoat: `You succeed in battle against the nefarious pirates with brute force. Now that the pirates have been dispatched, you take the ship for yourself and continue towards your destination.`,
-                                                                    fightLooters: `You draw your weapon and choose to face the looters head on! Steel yourself, for it is time to fight!`,
-                                                                          fightBoat: `The pirates have found you on the ship and know that you do not belong. They are preparing for a fight against you. You must do the same so that you can protect yourself and have any chance of staying on board the ship so you can get back your life.`,
-                                                                                fightCastle: `Upon entering the castle, you enter a large gloomy hallway. As you take a step forward, a large Gargoyle soon descends upon you! All you can do is battle!`,
-                                                                                      trickBoat: `You attempt to deceive the pirates by matching their attire using your, ${gameState.weapon}! If they believe to be one of their own, you can hitch a ride... let's see if it works...`,
-                                                                                            walkPlank: `Unfortunately you've been bested by the pirates... Luckily they leave you alive, but you have to pay for your insolence they force you to walk the plank. How cruel.`,
-                                                                                                  volcanoIsland: `You arrive at a peculiar island housing a lone volcano. The surroundings don't tell you very much, so it would be wise to investigate further.`,
-                                                                                                        wildBeast: `You're alerted by the sound of a ghastly roar! You turn around and find yourself at the mercy of a wild beast! You draw your, ${gameState.weapon} and begin the fight for your life.`,
-                                                                                                              recover: `After battling the beast, you must recover. Choose wisely how you will recover, for the wrong choice may lead to your demise.`,
-                                                                                                                    islandOptions: `Your respite on the island has given you strength. Should you choose to stay and recover more or do you feel ready to depart for the final stretch of your journey?`,
-                                                                                                                          secretPassage: `A secret passage appears in the depths of the cave. You venture inwards to discover two doors leading into the castle. What lurks beyond?`,
-                                                                                                                                backEntrance: `You open the door to find yourself deep within the castle walls, face to face with the thief that has stolen your likeness; this is what you have been waiting for.`,
-                                                                                                                                      goalIsland: `The island, once nearly disguised by the mist, now stands before you in all its glory. Upon the island, you see a large castle and a cave entrance. You know that the thief is on this island, but where could they be hiding? Do you approach the castle head on or do you try to find a secret entrance around back?`,
-                                                                                                                                            swim: `In the murky waters, two islands loom in the distance. The closer emits a faint plume of smoke, while the farther is nearly obscured by mist. Your arms ache with fatigue, and the waves grow more turbulent. Do you swim towards the volcanic island, hoping to find shelter, or do you push on towards the distant shore, risking exhaustion?`,
-                                                                                                                                                  strollIn: `The castle gates part for you with a dead behemoth at your feet. You step inside and find yourself in a dimly lit hallway. You begin to explore the castle and stumble across a figure in the shadows. As you approach, the figure steps forward and you see your own likeness. The thief who sullied your good name stands before you.`,
-                                                                                                                                                        fightRandom: `This is your chance, no, your destiny. You are face to face with the thief who has stolen your identity. This is the moment you have been preparing for. Do you have what it takes to win this fight and reclaim your life?`,
-                                                                                                                                                              getInfo: `Your battle, fought to the brink of death, has ended in victory. You offer your opponent a chance to survive in exchange for information pertaining to the thief you are after. Your opponent, beaten and breathless, recounts: "The villain you're after, they are on the far island. You need to get to the sea."`,
-                                                                                                                                                                    death: `Your quest ends here. The darkness takes you with your goal unfulfilled. Your name will become infamous for the crimes you did not commit and your family will die penniless.`,
-                                                                                                                                                                          victory: `Huzzah! You have reclaimed your identity and restored your life savings. Now you may start anew... hopefully people will forget about the crimes that your doppelganger committed.`
-                                                                                                                                                                              };
-                                                                                                                                                                                  return content[stateName] ?? `Unknown state: ${stateName}`;
-                                                                                                                                                                                    }
+  getContent(stateName, gameState) {
+    const content = {
+      start: `There is a thief in distant lands who has stolen your likeness. They have committed countless crimes, sullied your name, and emptied your life savings. Your mission is to find this thief and take back your life... Choose your path, brave soul.`,
+      seaChoice: `You start near port. Nearby, there is ship unattended beside a pirate ship leaving for an unknown destination. Should you steal the unattended ship or stow away on the pirate's vessel?`,
+      looters: `You make your way inward on a narrow path. You turn to your left and eyes peer through the brush; then to the right and another set lay upon you. You are being followed... As this revelation hits you, the looters move in closer for attack. What shall you do?`,
+      waterEdge: `You make a break for it. These looters are no match for ${gameState.heroName}! You race away from any familiar lands and stumble across the waters edge. The looters quickly catch up... what shall you do now?`,
+      trickLooters: `You attempt to deceive these fools posing as looters. Using your secret weapon, ${gameState.weapon} you attempt to beguile these looters for information. Let us see how they will respond...`,
+      found: `The crew has found you on the boat. You now have the choice to either try to trick them or fight them. Choose wisely, for the choice you make may determine whether you survive or not.`,
+      holeInBoat: `The abandoned boat you found has a hole in it making it not safe for travel. Your choice now is to try to patch the hole or you can decide to abandon ship and swim to your destination.`,
+      stealClothes: `You have been successful in tricking the pirates by means of stealing their clothes. You are now seen as a member of their crew and are able to ride along with them to your destination.`,
+      stealBoat: `You succeed in battle against the nefarious pirates with brute force. Now that the pirates have been dispatched, you take the ship for yourself and continue towards your destination.`,
+      fightLooters: `You draw your weapon and choose to face the looters head on! Steel yourself, for it is time to fight!`,
+      fightBoat: `The pirates have found you on the ship and know that you do not belong. They are preparing for a fight against you. You must do the same so that you can protect yourself and have any chance of staying on board the ship so you can get back your life.`,
+      fightCastle: `Upon entering the castle, you enter a large gloomy hallway. As you take a step forward, a large Gargoyle soon descends upon you! All you can do is battle!`,
+      trickBoat: `You attempt to deceive the pirates by matching their attire using your, ${gameState.weapon}! If they believe to be one of their own, you can hitch a ride... let's see if it works...`,
+      walkPlank: `Unfortunately you've been bested by the pirates... Luckily they leave you alive, but you have to pay for your insolence they force you to walk the plank. How cruel.`,
+      volcanoIsland: `You arrive at a peculiar island housing a lone volcano. The surroundings don't tell you very much, so it would be wise to investigate further.`,
+      wildBeast: `You're alerted by the sound of a ghastly roar! You turn around and find yourself at the mercy of a wild beast! You draw your, ${gameState.weapon} and begin the fight for your life.`,
+      recover: `After battling the beast, you must recover. Choose wisely how you will recover, for the wrong choice may lead to your demise.`,
+      islandOptions: `Your respite on the island has given you strength. Should you choose to stay and recover more or do you feel ready to depart for the final stretch of your journey?`,
+      secretPassage: `A secret passage appears in the depths of the cave. You venture inwards to discover two doors leading into the castle. What lurks beyond?`,
+      backEntrance: `You open the door to find yourself deep within the castle walls, face to face with the thief that has stolen your likeness; this is what you have been waiting for.`,
+      goalIsland: `The island, once nearly disguised by the mist, now stands before you in all its glory. Upon the island, you see a large castle and a cave entrance. You know that the thief is on this island, but where could they be hiding? Do you approach the castle head on or do you try to find a secret entrance around back?`,
+      swim: `In the murky waters, two islands loom in the distance. The closer emits a faint plume of smoke, while the farther is nearly obscured by mist. Your arms ache with fatigue, and the waves grow more turbulent. Do you swim towards the volcanic island, hoping to find shelter, or do you push on towards the distant shore, risking exhaustion?`,
+      strollIn: `The castle gates part for you with a dead behemoth at your feet. You step inside and find yourself in a dimly lit hallway. You begin to explore the castle and stumble across a figure in the shadows. As you approach, the figure steps forward and you see your own likeness. The thief who sullied your good name stands before you.`,
+      fightRandom: `This is your chance, no, your destiny. You are face to face with the thief who has stolen your identity. This is the moment you have been preparing for. Do you have what it takes to win this fight and reclaim your life?`,
+      getInfo: `Your battle, fought to the brink of death, has ended in victory. You offer your opponent a chance to survive in exchange for information pertaining to the thief you are after. Your opponent, beaten and breathless, recounts: "The villain you're after, they are on the far island. You need to get to the sea."`,
+      death: `Your quest ends here. The darkness takes you with your goal unfulfilled. Your name will become infamous for the crimes you did not commit and your family will die penniless.`,
+      victory: `Huzzah! You have reclaimed your identity and restored your life savings. Now you may start anew... hopefully people will forget about the crimes that your doppelganger committed.`
+    };
+    return content[stateName] ?? `Unknown state: ${stateName}`;
+  }
 
   update(gameState) {
     this.render(gameState);
@@ -351,8 +408,17 @@ class UI extends Observer {
 
     const visualImg = document.getElementById('visual-element');
     if (visualImg) {
-      visualImg.src = this.visuals[stateName] || "assets/Placeholder-1.jpg";
+      const weaponFallback = stateName !== 'start' && gameState.weapon
+        ? (this.weaponGifs[gameState.weapon] || "assets/Placeholder-1.jpg")
+        : "assets/Placeholder-1.jpg";
+      visualImg.src = this.visuals[stateName] || weaponFallback;
       visualImg.alt = `Scene for ${stateName}`;
+    }
+
+    const landType = this.landTypes[stateName] || 'land';
+    const gameBackground = document.getElementById('game-background');
+    if (gameBackground) {
+      gameBackground.style.setProperty('--bg-image', `url('assets/${landType}.jpg')`);
     }
 
     display.innerText = this.getContent(stateName, gameState);
@@ -390,65 +456,88 @@ class UI extends Observer {
       document.querySelector("#game-text").appendChild(monocular);
     }
   }
-  
+
 
   handleButtonClick(eventType) {
     this.game.sendEvent(eventType);
   }
 
   renderStartForm() {
-    const startForm = document.createElement("form");
+    // Outer box
+    const formBox = document.createElement("div");
+    formBox.className = "start-form-box";
+
+    // Helper: creates a labelled radio group section inside a box
+    const makeSection = (title, options, name, getValue, onChange) => {
+      const section = document.createElement("div");
+      section.className = "start-form-section";
+
+      const heading = document.createElement("h5");
+      heading.innerText = title;
+      section.appendChild(heading);
+
+      const radioGroup = document.createElement("div");
+      radioGroup.className = "start-form-radio-group";
+
+      options.forEach(option => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "start-form-radio-item";
+
+        const radioOption = document.createElement("input");
+        radioOption.type = "radio";
+        radioOption.name = name;
+        radioOption.value = option;
+        radioOption.id = `${name}-${option}`;
+        radioOption.checked = getValue() === option;
+        radioOption.onchange = () => onChange(option);
+
+        const label = document.createElement("label");
+        label.htmlFor = `${name}-${option}`;
+        label.innerText = option;
+
+        wrapper.appendChild(radioOption);
+        wrapper.appendChild(label);
+        radioGroup.appendChild(wrapper);
+      });
+
+      section.appendChild(radioGroup);
+      return section;
+    };
+
+    // Username field
+    const usernameSection = document.createElement("div");
+    usernameSection.className = "start-form-section";
+    const userLabel = document.createElement("label");
+    userLabel.innerText = "Hero Name";
+    userLabel.htmlFor = "userName";
+    userLabel.className = "start-form-label";
     const user = document.createElement("input");
     user.name = "userName";
     user.id = "userName";
-    const userLabel = document.createElement("label");
-    userLabel.innerText = "Username: ";
-    startForm.appendChild(userLabel);
-    startForm.appendChild(user);
+    user.className = "start-form-input";
+    user.value = this.game.heroName;
+    user.oninput = (e) => {
+      this.game.heroName = e.target.value;
+    };
+    usernameSection.appendChild(userLabel);
+    usernameSection.appendChild(user);
+    formBox.appendChild(usernameSection);
 
-    let header = document.createElement("h1");
-    header.innerText = "Weapon Options";
-    startForm.appendChild(header);
-    this.game.weaponOptions.forEach(option => {
-      const radioOption = document.createElement("input");
-      radioOption.type = "radio";
-      radioOption.name = "weapons";
-      radioOption.value = option;
-      startForm.appendChild(radioOption);
-      const label = document.createElement("label");
-      label.innerHTML = option;
-      startForm.appendChild(label);
-    });
+    // Radio sections
+    formBox.appendChild(makeSection(
+      "Weapon", this.game.weaponOptions, "weapons",
+      () => this.game.weapon, (val) => { this.game.weapon = val; }
+    ));
+    formBox.appendChild(makeSection(
+      "Special Item", this.game.specialItemOptions, "specialItem",
+      () => this.game.specialItem, (val) => { this.game.specialItem = val; }
+    ));
+    formBox.appendChild(makeSection(
+      "Armor", this.game.armorOptions, "armor",
+      () => this.game.armor, (val) => { this.game.armor = val; }
+    ));
 
-    header = document.createElement("h1");
-    header.innerText = "Special Item Options";
-    startForm.appendChild(header);
-    this.game.specialItemOptions.forEach(option => {
-      const radioOption = document.createElement("input");
-      radioOption.type = "radio";
-      radioOption.name = "specialItem";
-      radioOption.value = option;
-      startForm.appendChild(radioOption);
-      const label = document.createElement("label");
-      label.innerHTML = option;
-      startForm.appendChild(label);
-    });
-
-    header = document.createElement("h1");
-    header.innerText = "Armor Options";
-    startForm.appendChild(header);
-    this.game.armorOptions.forEach(option => {
-      const radioOption = document.createElement("input");
-      radioOption.type = "radio";
-      radioOption.name = "armor";
-      radioOption.value = option;
-      startForm.appendChild(radioOption);
-      const label = document.createElement("label");
-      label.innerHTML = option;
-      startForm.appendChild(label);
-    });
-
-    document.querySelector("#game-text").appendChild(startForm);
+    document.querySelector("#game-text").appendChild(formBox);
   }
 }
 
